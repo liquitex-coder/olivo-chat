@@ -49,6 +49,8 @@ olivo-chat/
 
 Step 1 の `pyproject.toml` に記載のとおり: FastAPI、Uvicorn、pydantic-settings、SQLAlchemy、asyncpg、psycopg2-binary、Alembic、python-jose、passlib、anthropic、stripe、および dev で pytest / httpx / ruff / mypy。
 
+**Python バージョン**: Docker イメージは **3.11.9**。ローカル開発では 3.11 以外（例: 3.14）でも `requires-python = ">=3.11,<4"` の範囲で `pip install -e ".[dev]"` 可能。本番・CI の基準はコンテナと揃えること。
+
 ### 4.3 API 表層（Step 1）
 
 - `GET /health` … ライブネス。`{"status":"ok"}`。
