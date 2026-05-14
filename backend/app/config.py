@@ -29,8 +29,6 @@ class Settings(BaseSettings):
     ADMIN_BASE_URL: str = ""
     API_BASE_URL: str = ""
 
-    # Frontend (Vite) — Step 4; declared here for env_consistency with .env.example
-    VITE_API_BASE_URL: str = ""
 
 
 settings = Settings()
