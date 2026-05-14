@@ -1,0 +1,31 @@
+project:
+  name: "Olivo Chat"
+  identifier: "olivo_chat"
+  track: "B"
+
+silent_assurance:
+  default_mode: "silent"
+  proof_log: "logs/audit_trail.jsonl"
+
+hallucination_tracking:
+  mode: "independent"
+
+syntactic:
+  tools:
+    - ruff
+
+contextual:
+  spec_sources:
+    - type: markdown
+      paths:
+        - "docs/olivo_chat_design.md"
+  env_consistency:
+    dotenv_path: ".env.example"
+    code_root: "backend/app"
+  regime: "spec_evolving"
+
+ethical:
+  manifesto_path: "manifesto/olivo.yaml"
+  enforcement_level: "strict"
+
+plugins: []

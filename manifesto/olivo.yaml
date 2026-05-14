@@ -1,0 +1,5 @@
+# Genmyaku Tier 3 用 Manifesto（Step 1 骨格。Step 2 以降で原則を追加）
+manifesto:
+  project: "olivo_chat"
+  version: "0.1"
+  principles: []
