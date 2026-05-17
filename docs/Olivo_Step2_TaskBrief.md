@@ -36,7 +36,7 @@ Step 1 で `docker-compose up` により FastAPI + PostgreSQL + 空の SQLAlchem
 | 主キー型 | **UUID v4** (`gen_random_uuid()`) | テナント間の ID 衝突回避、外部公開時の連番推測防止 |
 | FK 削除挙動 | **ON DELETE CASCADE** | テナント削除 → 会話 → メッセージが連鎖削除。営業デモなので簡素化優先 |
 | `updated_at` 更新 | **PostgreSQL トリガー** | アプリ層の更新漏れ防止。一般的な PG パターン |
-| RLS 方式 | `current_setting('app.current_tenant_id', true)::uuid` | セッション変数方式。Step 3 の Auth 層で `SET LOCAL` |
+| RLS 方式 | `current_setting('app.current_tenant_id', true)::uuid` | セッション変数方式。Step 3 の Auth 層で `set_config('app.current_tenant_id', tid, true)` |
 | RLS 対象 | `conversations`、`messages`（`tenants` は対象外） | tenants は認証層が触る／メタデータなので RLS 不要 |
 | messages の tenant_id | **冗長保持**（FK 二重） | RLS のフィルタを join せず単表で完結させる |
 | Alembic 接続 | **sync（psycopg2-binary）** | Alembic は sync 設計。app 本体は async（asyncpg）と切り分け |
@@ -199,7 +199,7 @@ CREATE POLICY tenant_isolation ON messages
 **重要ポイント**：
 
 - `FORCE ROW LEVEL SECURITY` を付ける：DB 所有者でも RLS を適用させる（テストでの取りこぼし防止）
-- `current_setting('app.current_tenant_id', true)`：`true` は「未設定時に NULL を返す」モード。SET LOCAL されていない接続では全行が見えない（安全側）
+- `current_setting('app.current_tenant_id', true)`：`true` は「未設定時に NULL を返す」モード。`set_config(..., true)` で設定されていない接続では全行が見えない（安全側）
 - `tenants` テーブル自体は RLS 無効：認証層がテナント自体を引く必要があり、tenant_id でフィルタすると自己参照になる
 
 ---
@@ -248,11 +248,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def set_tenant_context(session: AsyncSession, tenant_id: UUID) -> None:
     """セッション変数 app.current_tenant_id を設定して RLS を有効化する。
 
-    必ずトランザクション内で呼ぶこと（SET LOCAL のため）。
+    必ずトランザクション内で呼ぶこと（`set_config(..., is_local=true)` のため）。
     Step 3 の Auth ミドルウェアから呼ばれる想定。Step 2 ではテスト用。
     """
     await session.execute(
-        text("SET LOCAL app.current_tenant_id = :tid"),
+        text("SELECT set_config('app.current_tenant_id', :tid, true)"),
         {"tid": str(tenant_id)},
     )
 ```
@@ -363,7 +363,7 @@ class MessageRead(MessageBase):
 1. テナント A、テナント B を作成
 2. A のコンテキストで会話 + メッセージを挿入
 3. B のコンテキストで `SELECT` → A のレコードが見えないことを確認
-4. SET LOCAL なしで `SELECT` → 0 件
+4. `set_config()` なしで `SELECT` → 0 件
 5. A に戻すと再び見える
 
 ```python

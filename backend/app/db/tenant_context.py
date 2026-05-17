@@ -1,5 +1,6 @@
 """Set the per-session tenant ID for RLS."""
 from __future__ import annotations
+
 from uuid import UUID
 
 from sqlalchemy import text

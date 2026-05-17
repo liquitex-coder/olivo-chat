@@ -1,18 +1,17 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: olivo
-      POSTGRES_PASSWORD: olivo_dev_password
-      POSTGRES_DB: olivo_chat
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_admin_password
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - olivo_db_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U olivo -d olivo_chat"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
