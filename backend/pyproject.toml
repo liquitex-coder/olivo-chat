@@ -43,6 +43,13 @@ target-version = "py311"
 select = ["E", "F", "W", "I", "B", "UP", "S"]
 ignore = ["S101"]
 
+[tool.ruff.lint.per-file-ignores]
+# Test-only literal credentials:
+# S105 hits the literal "bearer" token_type comparison (OAuth2 scheme).
+# S106 hits TestClient calls that pass a literal password (e.g. signup).
+# S107 hits helper-function defaults like `password="correct_horse_battery"`.
+"tests/*" = ["S105", "S106", "S107"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
