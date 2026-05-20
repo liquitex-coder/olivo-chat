@@ -1,6 +1,7 @@
 """Olivo Chat backend - main FastAPI application."""
 from fastapi import FastAPI
 
+from app.auth.router import router as auth_router
 from app.config import settings
 
 app = FastAPI(
@@ -8,6 +9,8 @@ app = FastAPI(
     version="0.1.0",
     description="Chatbot SaaS for restaurants - Step 1 skeleton",
 )
+
+app.include_router(auth_router)
 
 
 @app.get("/health")
