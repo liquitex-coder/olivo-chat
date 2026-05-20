@@ -19,8 +19,8 @@ dependencies = [
     "asyncpg>=0.30",
     "psycopg2-binary>=2.9",
     "alembic>=1.13",
-    "python-jose[cryptography]>=3.3",
-    "passlib[bcrypt]>=1.7",
+    "pyjwt>=2.9",
+    "passlib[argon2]>=1.7",
     "anthropic>=0.40",
     "stripe>=11.0",
 ]
