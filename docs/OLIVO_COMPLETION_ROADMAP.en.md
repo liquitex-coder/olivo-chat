@@ -19,8 +19,8 @@ Phase 0  Requirements spec + human signature (re-root)     ✅ signed 2026-06-03
 Phase 1  Scaffold (FastAPI, settings, compose)             ✅ FR-A
 Phase 2  DB layer + RLS tenant isolation (Alembic 0001/02) ✅ FR-B
 Phase 3  Auth / JWT (users, refresh rotation, RLS-armed)   ✅ FR-C
-Phase 4  Frontend (React/Vite embed + admin) + conv API    ✅ FR-D1  ← done this session
-Phase 5  Claude-backed chat responses                      ⬜ FR-D2  💲 cost-gated → mock first
+Phase 4  Frontend (React/Vite embed + admin) + conv API    ✅ FR-D1
+Phase 5  Claude-backed chat responses                      ◐ FR-D2  pipeline ✅ mock / live 💲 ← this session
 Phase 6  Stripe subscription + webhook verification        ⬜ FR-D3  💲 cost-gated → test-mode/mock
 Phase 7  Production deploy (real secrets, managed PG)       ⬜ FR-D4  💲 cost-gated → demo only
 ```
@@ -47,12 +47,12 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | D1-2 | Vite embed widget (chat UI) against the API | `frontend/embed`: `npm run build` (tsc+vite) + `vitest` (3) green | ✅ |
 | D1-3 | Vite admin console (login, conversation list) | `frontend/admin`: `npm run build` + `vitest` (3) green | ✅ |
 
-### Phase 5 — Claude chat (FR-D2) ⬜ 💲 cost-gated
-| ID | Task | Done gate | Note |
+### Phase 5 — Claude chat (FR-D2) ◐ pipeline done (mock); live cost-gated
+| ID | Task | Done gate | Status |
 |---|---|---|---|
-| D2-1 | Chat service calling Claude (`ANTHROPIC_API_KEY`/`CLAUDE_MODEL`) **behind an interface** | unit tests with a **mocked** client green | build against mock; no live calls |
-| D2-2 | Persist assistant messages (role=assistant) under RLS | pytest green | |
-| D2-3 | *(approval-gated)* live Claude smoke test | manual, **only after cost approval** | 💲 |
+| D2-1 | Chat service **behind `ChatProvider` interface** (`DemoChatProvider` default; `AnthropicChatProvider` lazy, unwired) + `/chat` endpoint | `test_chat.py` mock provider green | ✅ |
+| D2-2 | Persist user + assistant messages (role) under RLS | `test_chat.py` green (2 turns persisted) | ✅ |
+| D2-3 | *(approval-gated)* swap in `AnthropicChatProvider` + live smoke test | manual, **only after cost approval** | ⬜ 💲 |
 
 ### Phase 6 — Stripe billing (FR-D3) ⬜ 💲 cost-gated
 | ID | Task | Done gate | Note |

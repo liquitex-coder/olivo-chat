@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MessageBase(BaseModel):
@@ -13,6 +13,12 @@ class MessageBase(BaseModel):
 
 class MessageCreate(MessageBase):
     pass
+
+
+class ChatRequest(BaseModel):
+    """A customer chat turn — content only; role is always 'user'."""
+
+    content: str = Field(min_length=1, max_length=4000)
 
 
 class MessageRead(MessageBase):

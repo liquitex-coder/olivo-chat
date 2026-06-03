@@ -14,9 +14,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import CurrentUser, get_current_user, get_db_session
+from app.chat import ChatProvider, generate_reply, get_chat_provider
 from app.db.models import Conversation, Message
 from app.schemas.conversation import ConversationCreate, ConversationRead
-from app.schemas.message import MessageCreate, MessageRead
+from app.schemas.message import ChatRequest, MessageCreate, MessageRead
 
 router = APIRouter(prefix="/api/v1/conversations", tags=["conversations"])
 
@@ -99,3 +100,29 @@ async def create_message(
     await session.flush()
     await session.refresh(message)
     return message
+
+
+@router.post(
+    "/{conversation_id}/chat",
+    status_code=status.HTTP_201_CREATED,
+    response_model=list[MessageRead],
+)
+async def chat(
+    conversation_id: UUID,
+    payload: ChatRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+    provider: ChatProvider = Depends(get_chat_provider),
+) -> list[Message]:
+    """Post a customer turn and get the assistant reply. Persists both messages
+    under RLS. The provider is the demo (zero-cost) default unless a cost-approved
+    Anthropic provider is swapped in."""
+    await _owned_conversation(session, conversation_id)
+    user_msg, assistant_msg = await generate_reply(
+        session=session,
+        conversation_id=conversation_id,
+        tenant_id=current_user.tenant_id,
+        user_content=payload.content,
+        provider=provider,
+    )
+    return [user_msg, assistant_msg]
