@@ -18,8 +18,8 @@ Phase 0  Requirements spec + human signature (re-root)     ✅ signed 2026-06-03
   └─ INV-R1 human-signature gate (bulk pre-approval FR-A…FR-D) ── unblocks all below
 Phase 1  Scaffold (FastAPI, settings, compose)             ✅ FR-A
 Phase 2  DB layer + RLS tenant isolation (Alembic 0001/02) ✅ FR-B
-Phase 3  Auth / JWT (users, refresh rotation, RLS-armed)   ✅ FR-C  ← done this session
-Phase 4  Frontend (React/Vite embed + admin)               ⬜ FR-D1  (no charge)
+Phase 3  Auth / JWT (users, refresh rotation, RLS-armed)   ✅ FR-C
+Phase 4  Frontend (React/Vite embed + admin) + conv API    ✅ FR-D1  ← done this session
 Phase 5  Claude-backed chat responses                      ⬜ FR-D2  💲 cost-gated → mock first
 Phase 6  Stripe subscription + webhook verification        ⬜ FR-D3  💲 cost-gated → test-mode/mock
 Phase 7  Production deploy (real secrets, managed PG)       ⬜ FR-D4  💲 cost-gated → demo only
@@ -40,12 +40,12 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | C-6 | `get_current_user` Bearer dep arms RLS; protected GET | `test_protected_endpoint` (4) green | ✅ |
 | C-7 | ruff Tier-1 = 0; full suite 27 passed | `ruff check .` = 0; `pytest -q` = 27 | ✅ |
 
-### Phase 4 — Frontend embed + admin (FR-D1) ⬜ — no charge
-| ID | Task | Done gate |
-|---|---|---|
-| D1-1 | Conversation/message read+create API (auth-scoped, RLS) | new pytest for the API green |
-| D1-2 | Vite embed widget (chat UI) against the API | build passes; component tests |
-| D1-3 | Vite admin console (login, conversation list) | build passes; component tests |
+### Phase 4 — Frontend embed + admin (FR-D1) ✅ DONE — no charge
+| ID | Task | Done gate | Status |
+|---|---|---|---|
+| D1-1 | Conversation/message read+create API (auth-scoped, RLS; foreign conv → 404) | `test_conversations_api.py` (5) green | ✅ |
+| D1-2 | Vite embed widget (chat UI) against the API | `frontend/embed`: `npm run build` (tsc+vite) + `vitest` (3) green | ✅ |
+| D1-3 | Vite admin console (login, conversation list) | `frontend/admin`: `npm run build` + `vitest` (3) green | ✅ |
 
 ### Phase 5 — Claude chat (FR-D2) ⬜ 💲 cost-gated
 | ID | Task | Done gate | Note |
@@ -75,25 +75,26 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | Phase 1 scaffold (FR-A) | 3 | 3 | 100% ✅ |
 | Phase 2 DB+RLS (FR-B) | 6 | 6 | 100% ✅ |
 | Phase 3 Auth (FR-C) | 7 | 7 | 100% ✅ |
-| Phase 4–7 (FR-D epics) | 4 | 0 | 0% ⬜ |
-| **Signed backend scope (FR-A…FR-C)** | **16** | **16** | **100% ✅** |
-| **Full product (FR-A…FR-D)** | **20** | **16** | **80%** |
+| Phase 4 Conv API + frontends (FR-D1) | 1 | 1 | 100% ✅ |
+| Phase 5–7 (FR-D2/3/4 epics) | 3 | 0 | 0% ⬜ 💲 |
+| **Signed scope done (FR-A…C + D1)** | **17** | **17** | **100% ✅** |
+| **Full product (FR-A…FR-D)** | **20** | **17** | **85%** |
 
 ```
-Full product (Olivo completion)  [████████████████████░░░░░] 80%  (16/20 reqs audit-confirmed)
+Full product (Olivo completion)  [██████████████████████░░░] 85%  (17/20 reqs audit-confirmed)
 Phase 1 Scaffold   [██████████████████████████] 100% ✅
 Phase 2 DB + RLS   [██████████████████████████] 100% ✅
-Phase 3 Auth/JWT   [██████████████████████████] 100% ✅  (27 pytest green, ruff 0)
-Phase 4 Frontend   [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% ⬜  next (no charge)
+Phase 3 Auth/JWT   [██████████████████████████] 100% ✅  (pytest green, ruff 0)
+Phase 4 Frontend   [██████████████████████████] 100% ✅  (5 pytest + 2× build/vitest)
 Phase 5 Claude     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  mock first; live = approval
 Phase 6 Stripe     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  mock first; live = approval
 Phase 7 Deploy     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  demo only; hosting = approval
 ```
 
-> **80% is requirement-count, audit-confirmed.** Honesty notes: FR-D are *epics* so 80%
-> overstates how little *effort* remains relative to the front-loaded backend; and FR-D2/
-> D3/D4 will be built against **mocks/dummy data** until explicit cost approval, since they
-> would otherwise incur charges. Next no-charge milestone: **Phase 4 (frontend + conversation API)**.
+> **85% is requirement-count, audit-confirmed.** Honesty notes: the remaining FR-D2/D3/D4
+> are integration *epics* and will be built against **mocks/dummy data** until explicit cost
+> approval, since they would otherwise incur charges. Next milestone: **Phase 5 (Claude chat,
+> mock-first)** — needs cost approval before any live API call.
 
 ---
 
