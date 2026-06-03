@@ -19,8 +19,8 @@ dependencies = [
     "asyncpg>=0.30",
     "psycopg2-binary>=2.9",
     "alembic>=1.13",
-    "python-jose[cryptography]>=3.3",
-    "passlib[bcrypt]>=1.7",
+    "pyjwt>=2.9",
+    "passlib[argon2]>=1.7",
     "anthropic>=0.40",
     "stripe>=11.0",
 ]
@@ -41,6 +41,13 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S"]
 ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI's DI requires Depends()/Header() calls in argument defaults.
+"app/**/router.py" = ["B008"]
+"app/**/dependencies.py" = ["B008"]
+# Tests use dummy (non-secret) credentials by design.
+"tests/**" = ["S105", "S106"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

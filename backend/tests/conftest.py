@@ -33,19 +33,22 @@ _DEFAULT_ENV: dict[str, str] = {
 for _key, _val in _DEFAULT_ENV.items():
     os.environ.setdefault(_key, _val)
 
+import httpx  # noqa: E402
+from sqlalchemy import text  # noqa: E402
+
 from app.db.session import engine  # noqa: E402
+from app.main import app  # noqa: E402
+
+_ALL_TABLES = "tenants, users, refresh_tokens, conversations, messages"
 
 
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations() -> None:
     """テストセッション開始時に Alembic でスキーマを適用する。
 
-    Note (Step 2.1 で対処予定):
-    Docker postgres image は POSTGRES_USER を SUPERUSER + BYPASSRLS として
-    作成するため、現状 RLS テスト 3 件は PASS しない。Step 2.1 で
-    docker-compose.yml に init script を追加して olivo を NOSUPERUSER
-    NOBYPASSRLS で作成する、または別の app ユーザーを作成して
-    そちらでテストを走らせる方針で対処する。
+    Step 2.1 で解決済み: `db/init/00-create-app-user.sql` が olivo を
+    NOSUPERUSER NOBYPASSRLS で作成するため、RLS テスト（conversations /
+    messages / refresh_tokens）は本物の RLS 制約下で PASS する。
     """
     cfg = Config(str(_BACKEND_ROOT / "alembic.ini"))
     command.upgrade(cfg, "head")
@@ -62,3 +65,19 @@ async def db_session() -> AsyncIterator[AsyncSession]:
         finally:
             await session.close()
             await trans.rollback()
+
+
+@pytest.fixture(autouse=True)
+async def _clean_tables() -> AsyncIterator[None]:
+    """API-level tests commit real rows; truncate before each test for isolation."""
+    async with engine.begin() as conn:
+        await conn.execute(text(f"TRUNCATE {_ALL_TABLES} CASCADE"))
+    yield
+
+
+@pytest.fixture
+async def client() -> AsyncIterator[httpx.AsyncClient]:
+    """httpx client bound to the FastAPI app via ASGI transport."""
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
