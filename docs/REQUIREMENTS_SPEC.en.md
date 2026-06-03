@@ -157,10 +157,25 @@ targeted pytest pass · `ruff check .` = 0 · the auditor run is PASS (≤ the o
   the stated stack; nothing in scope contradicts INV-1.
 
 ## 12. Progress dashboard (audit-confirmed, Done only)
-Counted from static inspection of the repo (models, migrations, file presence) and the
-recorded Step-2 `10/10` result. Full pytest re-execution needs a running Postgres, which
-this container does not provide; FR-B is therefore marked audit-confirmed on schema +
-test-presence, to be re-confirmed by `pytest` in CI.
+**Re-confirmed by actual test execution (2026-06-03, self-application).** A local
+PostgreSQL 16 cluster was stood up with the repo's own `db/init/00-create-app-user.sql`
+(the `olivo` role created **NOSUPERUSER NOBYPASSRLS** — the condition that makes RLS
+enforcement real), Alembic applied `head`, and the suite run:
+
+```
+$ python -m pytest -v        # backend/, against live Postgres, olivo NOBYPASSRLS
+10 passed
+  test_health.py ....................... 2  (FR-A1, FR-A2)
+  test_db_models.py .................... 5  (FR-B1, FR-B6 — CASCADE, FK, updated_at)
+  test_rls_isolation.py ................ 3  (FR-B2/B3/B4/B5 — incl. no-context → 0 rows)
+$ ruff check backend/        # Tier-1
+All checks passed!  (0 claims)
+```
+
+This **closes the earlier self-reported caveat** ("full pytest needs a Postgres this
+container does not provide"): the auditor was applied to this document's own claims, a
+Postgres was provided, and FR-A/FR-B are now audit-confirmed **by a real pytest pass**,
+not merely by schema + test-presence. FR-C remains 0% (no auth tests exist to pass).
 
 | Layer | Reqs | Audit-confirmed Done | Progress |
 |---|---:|---:|---:|
