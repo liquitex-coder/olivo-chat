@@ -20,8 +20,8 @@ Phase 1  Scaffold (FastAPI, settings, compose)             ✅ FR-A
 Phase 2  DB layer + RLS tenant isolation (Alembic 0001/02) ✅ FR-B
 Phase 3  Auth / JWT (users, refresh rotation, RLS-armed)   ✅ FR-C
 Phase 4  Frontend (React/Vite embed + admin) + conv API    ✅ FR-D1
-Phase 5  Claude-backed chat responses                      ◐ FR-D2  pipeline ✅ mock / live 💲 ← this session
-Phase 6  Stripe subscription + webhook verification        ⬜ FR-D3  💲 cost-gated → test-mode/mock
+Phase 5  Claude-backed chat responses                      ◐ FR-D2  pipeline ✅ mock / live 💲
+Phase 6  Stripe subscription + webhook verification        ◐ FR-D3  pipeline ✅ offline / live 💲 ← this session
 Phase 7  Production deploy (real secrets, managed PG)       ⬜ FR-D4  💲 cost-gated → demo only
 ```
 
@@ -54,12 +54,12 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | D2-2 | Persist user + assistant messages (role) under RLS | `test_chat.py` green (2 turns persisted) | ✅ |
 | D2-3 | *(approval-gated)* swap in `AnthropicChatProvider` + live smoke test | manual, **only after cost approval** | ⬜ 💲 |
 
-### Phase 6 — Stripe billing (FR-D3) ⬜ 💲 cost-gated
-| ID | Task | Done gate | Note |
+### Phase 6 — Stripe billing (FR-D3) ◐ pipeline done (offline); live cost-gated
+| ID | Task | Done gate | Status |
 |---|---|---|---|
-| D3-1 | Subscription + webhook signature verification (`STRIPE_*`) behind an interface | unit tests with **mocked/test-mode** Stripe green | no live keys |
-| D3-2 | Plan gating (`tenants.plan` free/pro/business) | pytest green | |
-| D3-3 | *(approval-gated)* live Stripe test-mode wiring | **only after cost approval** | 💲 |
+| D3-1 | Subscription checkout + webhook signature verification behind `BillingProvider` (`DemoBillingProvider` default, real Stripe-compatible HMAC-SHA256 verify; `StripeBillingProvider` lazy, unwired) | `test_billing.py` (checkout, webhook upgrade, bad-signature 400) green | ✅ |
+| D3-2 | Plan gating (`tenants.plan` free/pro/business; `/billing/premium` 402 until paid) | `test_billing.py` (gating + ranking) green | ✅ |
+| D3-3 | *(approval-gated)* swap in `StripeBillingProvider` + live test-mode wiring | **only after cost approval** | ⬜ 💲 |
 
 ### Phase 7 — Deploy (FR-D4) ⬜ 💲 cost-gated
 | ID | Task | Done gate | Note |
@@ -76,7 +76,9 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | Phase 2 DB+RLS (FR-B) | 6 | 6 | 100% ✅ |
 | Phase 3 Auth (FR-C) | 7 | 7 | 100% ✅ |
 | Phase 4 Conv API + frontends (FR-D1) | 1 | 1 | 100% ✅ |
-| Phase 5–7 (FR-D2/3/4 epics) | 3 | 0 | 0% ⬜ 💲 |
+| Phase 5 chat pipeline (FR-D2, mock) | — | — | pipeline ✅ / live ⬜ 💲 |
+| Phase 6 billing pipeline (FR-D3, offline) | — | — | pipeline ✅ / live ⬜ 💲 |
+| Phase 7 + live activations (FR-D2/3/4) | 3 | 0 | 0% ⬜ 💲 |
 | **Signed scope done (FR-A…C + D1)** | **17** | **17** | **100% ✅** |
 | **Full product (FR-A…FR-D)** | **20** | **17** | **85%** |
 
@@ -86,15 +88,16 @@ Phase 1 Scaffold   [████████████████████
 Phase 2 DB + RLS   [██████████████████████████] 100% ✅
 Phase 3 Auth/JWT   [██████████████████████████] 100% ✅  (pytest green, ruff 0)
 Phase 4 Frontend   [██████████████████████████] 100% ✅  (5 pytest + 2× build/vitest)
-Phase 5 Claude     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  mock first; live = approval
-Phase 6 Stripe     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  mock first; live = approval
+Phase 5 Claude     [████████████████████░░░░░]  pipeline ✅ mock · live 💲 approval
+Phase 6 Stripe     [████████████████████░░░░░]  pipeline ✅ offline · live 💲 approval
 Phase 7 Deploy     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  demo only; hosting = approval
 ```
 
-> **85% is requirement-count, audit-confirmed.** Honesty notes: the remaining FR-D2/D3/D4
-> are integration *epics* and will be built against **mocks/dummy data** until explicit cost
-> approval, since they would otherwise incur charges. Next milestone: **Phase 5 (Claude chat,
-> mock-first)** — needs cost approval before any live API call.
+> **85% is requirement-count, audit-confirmed (41 pytest + ruff + 2 frontend builds).**
+> The chat (FR-D2) and billing (FR-D3) *pipelines* are mock/offline-complete and tested;
+> the remaining work is the **cost-gated live activations** (real Claude, live Stripe, paid
+> hosting) plus deploy manifests (FR-D4). Next no-charge step: **FR-D4 deploy manifests**
+> (config only); live activations need cost approval.
 
 ---
 

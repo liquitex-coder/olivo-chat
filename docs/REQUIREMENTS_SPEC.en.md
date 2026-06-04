@@ -94,7 +94,7 @@ implemented · ⬜ forward requirement (B-anchor only, AC deferred to its step-s
 |---|---|---|---|
 | FR-D1 | Conversation/message API + embed & admin frontends (React/Vite) | `test_conversations_api.py` (5) green; `frontend/embed` & `frontend/admin` `npm run build` + `vitest` green | ✅ |
 | FR-D2 | Claude-backed chat responses using `ANTHROPIC_API_KEY` / `CLAUDE_MODEL` | pipeline behind `ChatProvider` + `/chat` endpoint, mock-tested (`test_chat.py` 3); **live Claude swap pending cost approval** | ◐ pipeline ✅ / live ⬜ 💲 |
-| FR-D3 | Stripe subscription + webhook signature verification (`STRIPE_*` env) | (mock/test-mode; live = cost-gated) | ⬜ 💲 |
+| FR-D3 | Stripe subscription + webhook signature verification (`STRIPE_*` env) | `BillingProvider` iface; HMAC-SHA256 webhook verify (Stripe-compatible) + plan gating (free/pro/business), offline-tested (`test_billing.py` 6); **live Stripe swap pending cost approval** | ◐ pipeline ✅ / live ⬜ 💲 |
 | FR-D4 | Production deploy: real secrets, managed Postgres `DATABASE_URL` (no dev placeholders) | (demo only; hosting = cost-gated) | ⬜ 💲 |
 
 > **FR-D1 (done 2026-06-03):** API — `POST/GET /api/v1/conversations`, `POST/GET
@@ -178,7 +178,7 @@ applied `head` (through `0003`), and the suite run:
 
 ```
 $ python -m pytest -q        # backend/, against live Postgres, olivo NOBYPASSRLS
-35 passed
+41 passed
   test_health.py .................. 2   (FR-A1/A2)
   test_db_models.py ............... 5   (FR-B1/B6)
   test_rls_isolation.py ........... 3   (FR-B2/B3/B4/B5)
@@ -189,6 +189,7 @@ $ python -m pytest -q        # backend/, against live Postgres, olivo NOBYPASSRL
   test_protected_endpoint.py ...... 4   (FR-C1/C6 — JWT-armed RLS isolation)
   test_conversations_api.py ....... 5   (FR-D1 — RLS-scoped conv/message API)
   test_chat.py .................... 3   (FR-D2 pipeline — mock provider, no cost)
+  test_billing.py ................. 6   (FR-D3 pipeline — HMAC webhook + plan gating)
 $ ruff check .               # Tier-1
 All checks passed!  (0 claims)
 
@@ -205,6 +206,7 @@ $ (cd frontend/admin && npm run build && npm run test)
 | FR-C Auth/JWT | 7 | 7 | **100% ✅** |
 | FR-D1 Conv API + frontends | 1 | 1 | **100% ✅** |
 | FR-D2 chat pipeline (mock, no cost) | — | — | **pipeline ✅ / live ⬜ 💲** |
+| FR-D3 billing pipeline (offline, no cost) | — | — | **pipeline ✅ / live ⬜ 💲** |
 | **Signed scope done (FR-A…C + D1)** | **17** | **17** | **100% ✅** |
 | FR-D2–4 *live* integrations (Claude/Stripe/deploy) | 3 | 0 | **0% ⬜ cost-gated** |
 | **Full product (FR-A…FR-D)** | **20** | **17** | **85%** |
@@ -212,10 +214,10 @@ $ (cd frontend/admin && npm run build && npm run test)
 ```
 FR-A Scaffold        [██████████████████████████] 100% ✅
 FR-B DB + isolation  [██████████████████████████] 100% ✅
-FR-C Auth / JWT      [██████████████████████████] 100% ✅ (35 pytest green)
+FR-C Auth / JWT      [██████████████████████████] 100% ✅ (41 pytest green)
 FR-D1 Conv API+UI    [██████████████████████████] 100% ✅ (5 pytest + 2× build/vitest)
 FR-D2 Claude chat    [████████████████████░░░░░]  pipeline ✅ mock-tested · live swap ⬜ 💲
-FR-D3 Stripe         [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% ⬜ 💲 cost-gated (mock first)
+FR-D3 Stripe billing [████████████████████░░░░░]  pipeline ✅ offline-tested · live swap ⬜ 💲
 FR-D4 Deploy         [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% ⬜ 💲 cost-gated (demo only)
 
 Full product (FR-A…FR-D)  [██████████████████████░░░] 85%  (17/20 reqs audit-confirmed)
