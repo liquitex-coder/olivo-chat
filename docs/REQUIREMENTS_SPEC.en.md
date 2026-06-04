@@ -89,13 +89,19 @@ implemented · ⬜ forward requirement (B-anchor only, AC deferred to its step-s
 > tenant id so `rotate` arms the RLS context before the by-hash query — strict tenant
 > `USING` is preserved; security still rests on the unguessable random part + stored hash.
 
-### FR-D · Forward requirements (B-anchor only — AC deferred to signed step-specs)
-| ID | Requirement | Status |
-|---|---|---|
-| FR-D1 | Conversation/message API consumed by the embed + admin frontends (React/Vite) | ⬜ |
-| FR-D2 | Claude-backed chat responses using `ANTHROPIC_API_KEY` / `CLAUDE_MODEL` | ⬜ |
-| FR-D3 | Stripe subscription + webhook signature verification (`STRIPE_*` env) | ⬜ |
-| FR-D4 | Production deploy: real secrets, managed Postgres `DATABASE_URL` (no dev placeholders) | ⬜ |
+### FR-D · Forward requirements
+| ID | Requirement | Acceptance criterion | Status |
+|---|---|---|---|
+| FR-D1 | Conversation/message API + embed & admin frontends (React/Vite) | `test_conversations_api.py` (5) green; `frontend/embed` & `frontend/admin` `npm run build` + `vitest` green | ✅ |
+| FR-D2 | Claude-backed chat responses using `ANTHROPIC_API_KEY` / `CLAUDE_MODEL` | pipeline behind `ChatProvider` + `/chat` endpoint, mock-tested (`test_chat.py` 3); **live Claude swap pending cost approval** | ◐ pipeline ✅ / live ⬜ 💲 |
+| FR-D3 | Stripe subscription + webhook signature verification (`STRIPE_*` env) | `BillingProvider` iface; HMAC-SHA256 webhook verify (Stripe-compatible) + plan gating (free/pro/business), offline-tested (`test_billing.py` 6); **live Stripe swap pending cost approval** | ◐ pipeline ✅ / live ⬜ 💲 |
+| FR-D4 | Production deploy: real secrets, managed Postgres `DATABASE_URL` (no dev placeholders) | `render.yaml` blueprint (no committed secrets) + `prodcheck` preflight, validated by `test_deploy_config.py` (5); **actual hosted deploy pending cost approval** | ◐ config ✅ / live ⬜ 💲 |
+
+> **FR-D1 (done 2026-06-03):** API — `POST/GET /api/v1/conversations`, `POST/GET
+> /api/v1/conversations/{id}/messages`, all RLS-scoped (a foreign conversation is 404, never
+> a cross-tenant read/write). Frontends — `frontend/embed` (customer chat widget) and
+> `frontend/admin` (operator login + conversation list), each a Vite+React+TS app whose
+> `npm run build` (tsc + vite) and `vitest` suite pass. Demo wiring uses dummy tokens.
 
 ## 5. Non-functional requirements / invariants (do not break)
 - **INV-1 Tenant isolation** — every tenant-scoped table is RLS-protected with `FORCE` +
@@ -144,7 +150,8 @@ targeted pytest pass · `ruff check .` = 0 · the auditor run is PASS (≤ the o
 | FR-A | design §3, §4.3, §4.5 | `test_health.py` (2) |
 | FR-B | design §4.4 + Step2 brief | `test_db_models.py` (5), `test_rls_isolation.py` (3) |
 | FR-C | Step3 brief §1–§8 | `test_auth_signup/login/refresh_rotation/logout` + `test_protected_endpoint` (17) |
-| FR-D | design §5, §4.6 | (deferred to step-specs) |
+| FR-D1 | design §4.4, §5 | `test_conversations_api.py` (5); `frontend/{embed,admin}` build + vitest (3+3) |
+| FR-D2–4 | design §5, §4.6 | (deferred; cost-gated) |
 
 ## 11. Gaps and infeasibility findings (claimed-vs-actual, auditor self-applied)
 - **G1 (RESOLVED 2026-06-03):** FR-C (Auth) is now **implemented and audit-confirmed** —
@@ -171,7 +178,7 @@ applied `head` (through `0003`), and the suite run:
 
 ```
 $ python -m pytest -q        # backend/, against live Postgres, olivo NOBYPASSRLS
-27 passed
+46 passed
   test_health.py .................. 2   (FR-A1/A2)
   test_db_models.py ............... 5   (FR-B1/B6)
   test_rls_isolation.py ........... 3   (FR-B2/B3/B4/B5)
@@ -180,8 +187,17 @@ $ python -m pytest -q        # backend/, against live Postgres, olivo NOBYPASSRL
   test_auth_refresh_rotation.py ... 3   (FR-C4)
   test_auth_logout.py ............. 2   (FR-C5)
   test_protected_endpoint.py ...... 4   (FR-C1/C6 — JWT-armed RLS isolation)
+  test_conversations_api.py ....... 5   (FR-D1 — RLS-scoped conv/message API)
+  test_chat.py .................... 3   (FR-D2 pipeline — mock provider, no cost)
+  test_billing.py ................. 6   (FR-D3 pipeline — HMAC webhook + plan gating)
+  test_deploy_config.py ........... 5   (FR-D4 config — render.yaml + prod preflight)
 $ ruff check .               # Tier-1
 All checks passed!  (0 claims)
+
+$ (cd frontend/embed && npm run build && npm run test)   # tsc + vite + vitest
+✓ built;  3 vitest passed
+$ (cd frontend/admin && npm run build && npm run test)
+✓ built;  3 vitest passed
 ```
 
 | Layer | Reqs | Audit-confirmed Done | Progress |
@@ -189,26 +205,32 @@ All checks passed!  (0 claims)
 | FR-A Scaffold | 3 | 3 | **100% ✅** |
 | FR-B DB + isolation | 6 | 6 | **100% ✅** |
 | FR-C Auth/JWT | 7 | 7 | **100% ✅** |
-| **Signed backend scope (FR-A…FR-C)** | **16** | **16** | **100% ✅** |
-| FR-D Forward epics (frontend/Claude/Stripe/deploy) | 4 | 0 | **0% ⬜ cost-gated** |
-| **Full product (FR-A…FR-D)** | **20** | **16** | **80%** |
+| FR-D1 Conv API + frontends | 1 | 1 | **100% ✅** |
+| FR-D2 chat pipeline (mock, no cost) | — | — | **pipeline ✅ / live ⬜ 💲** |
+| FR-D3 billing pipeline (offline, no cost) | — | — | **pipeline ✅ / live ⬜ 💲** |
+| FR-D4 deploy config (manifest, no cost) | — | — | **config ✅ / live ⬜ 💲** |
+| **Signed scope done (FR-A…C + D1)** | **17** | **17** | **100% ✅** |
+| **No-charge scope (incl. D2/D3/D4 non-live)** | — | — | **100% ✅** |
+| FR-D2–4 *live* activations (Claude/Stripe/deploy) | 3 | 0 | **0% ⬜ cost-gated** |
+| **Full product (FR-A…FR-D)** | **20** | **17** | **85%** |
 
 ```
-Signed backend scope (scaffold→auth)  [██████████████████████████] 100% ✅ (16/16, 27 pytest green)
 FR-A Scaffold        [██████████████████████████] 100% ✅
 FR-B DB + isolation  [██████████████████████████] 100% ✅
-FR-C Auth / JWT      [██████████████████████████] 100% ✅ (27 pytest green)
-FR-D Forward epics   [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% ⬜ cost-gated (Claude/Stripe/deploy)
+FR-C Auth / JWT      [██████████████████████████] 100% ✅ (46 pytest green)
+FR-D1 Conv API+UI    [██████████████████████████] 100% ✅ (5 pytest + 2× build/vitest)
+FR-D2 Claude chat    [████████████████████░░░░░]  pipeline ✅ mock-tested · live swap ⬜ 💲
+FR-D3 Stripe billing [████████████████████░░░░░]  pipeline ✅ offline-tested · live swap ⬜ 💲
+FR-D4 Deploy         [████████████████████░░░░░]  config ✅ validated · hosted deploy ⬜ 💲
 
-Full product (FR-A…FR-D)  [████████████████████░░░░░] 80%  (16/20 reqs audit-confirmed)
+Full product (FR-A…FR-D)  [██████████████████████░░░] 85%  (17/20 reqs audit-confirmed)
 ```
 
-> The % is **audit-confirmed, not self-reported** (27 pytest + ruff actually pass). Two
-> honesty caveats: (1) FR-D items are **epics**, not single tasks, so the 80% requirement
-> count overstates remaining *effort* — frontend/Claude/Stripe/deploy are the bulk of the
-> product still to build; (2) FR-D2/D3/D4 incur **real charges** (Claude API, Stripe,
-> hosting) and need explicit cost approval before any live work — they will be built
-> against **mocks/dummy data** for the demo until then.
+> The % is **audit-confirmed, not self-reported** (46 pytest + ruff + two frontend
+> build/vitest runs actually pass). The **entire no-charge scope is complete**: the chat and
+> billing pipelines and the deploy config are built and tested offline. The remaining 15%
+> (the strict 17/20) is *exclusively* the **cost-gated live activations** — real Claude, live
+> Stripe, paid hosting — each one swap away and pending explicit cost approval.
 
 ## 13. Signature / re-root gate — **SIGNED (human bulk pre-approval)**
 This spec is now a **binding oracle** (INV-R1): the human owner gave an explicit bulk

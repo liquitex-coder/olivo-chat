@@ -1,0 +1,74 @@
+# Render Blueprint for Olivo Chat (demo / sales).
+#
+# This is a deploy MANIFEST only — applying it (and thus incurring hosting +
+# managed-Postgres charges) is a separate, cost-approved action. No secrets are
+# committed: secret slots use `sync: false` (set in the Render dashboard) or
+# `generateValue` (Render generates one). `plan: free` keeps the demo at $0 with
+# spin-down; bump to `starter` for an always-on demo (~$7/service + ~$7 DB).
+
+databases:
+  - name: olivo-postgres
+    databaseName: olivo_chat
+    user: olivo
+    plan: free
+
+services:
+  # Backend API (FastAPI, Docker)
+  - type: web
+    name: olivo-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: olivo-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true            # Render generates a strong secret
+      - key: JWT_ACCESS_TTL
+        value: "900"
+      - key: JWT_REFRESH_TTL
+        value: "2592000"
+      - key: CLAUDE_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: ANTHROPIC_API_KEY
+        sync: false                    # set in dashboard (cost-gated; live billing)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_BUSINESS
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: EMBED_BASE_URL
+        sync: false
+      - key: ADMIN_BASE_URL
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+
+  # Customer embed widget (Vite static)
+  - type: web
+    name: olivo-embed
+    runtime: static
+    buildCommand: cd frontend/embed && npm install && npm run build
+    staticPublishPath: frontend/embed/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+
+  # Operator admin console (Vite static)
+  - type: web
+    name: olivo-admin
+    runtime: static
+    buildCommand: cd frontend/admin && npm install && npm run build
+    staticPublishPath: frontend/admin/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
