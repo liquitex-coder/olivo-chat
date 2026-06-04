@@ -1,5 +1,6 @@
 """Olivo Chat backend - main FastAPI application."""
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.router import router as auth_router
 from app.billing.router import router as billing_router
@@ -11,6 +12,16 @@ app = FastAPI(
     version="0.1.0",
     description="Chatbot SaaS for restaurants",
 )
+
+_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(auth_router)
 app.include_router(conversations_router)
