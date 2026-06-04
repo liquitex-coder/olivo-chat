@@ -33,19 +33,28 @@ export function EmbedWidget({ token, conversationId, tenantName }: Props) {
 
   return (
     <div className="olivo-embed">
-      <header>{tenantName ?? "Olivo Chat"}</header>
-      {error && <p className="olivo-error">{error}</p>}
-      <ul>
+      <div className="olivo-header">
+        <div className="olivo-avatar">🍝</div>
+        <div>
+          <div className="olivo-title">{tenantName ?? "Olivo Chat"}</div>
+          <div className="olivo-status">Online · usually replies instantly</div>
+        </div>
+      </div>
+      <div className="olivo-messages">
         {messages.map((m) => (
-          <li key={m.id} data-role={m.role}>
-            {m.content}
-          </li>
+          <div key={m.id} className={`olivo-msg olivo-msg--${m.role}`}>
+            <div className="bubble">{m.content}</div>
+          </div>
         ))}
-      </ul>
+        {error && <p className="olivo-error">{error}</p>}
+      </div>
       <div className="olivo-compose">
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void onSend();
+          }}
           placeholder="Ask about the menu, hours, booking…"
         />
         <button onClick={onSend} disabled={!isSendable(draft)}>

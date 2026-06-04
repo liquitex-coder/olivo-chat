@@ -82,7 +82,10 @@ async def test_chat_on_foreign_conversation_is_404(
 
 async def test_demo_provider_is_deterministic_and_offline() -> None:
     provider = DemoChatProvider()
-    first = await provider.reply(user_message="Hi", history=[])
-    second = await provider.reply(user_message="Hi", history=[])
-    assert first == second
-    assert "Hi" in first
+    first = await provider.reply(user_message="Can I book a table?", history=[])
+    second = await provider.reply(user_message="Can I book a table?", history=[])
+    assert first == second  # deterministic
+    assert "reserve" in first.lower()  # keyword-routed to the reservation reply
+    # an unmatched message still gets a friendly non-empty reply
+    generic = await provider.reply(user_message="zzz", history=[])
+    assert len(generic) > 0

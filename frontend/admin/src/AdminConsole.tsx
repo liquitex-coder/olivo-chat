@@ -29,32 +29,51 @@ export function AdminConsole() {
   if (!token) {
     return (
       <div className="olivo-admin-login">
-        <h1>Olivo Admin</h1>
-        {error && <p className="olivo-error">{error}</p>}
-        <input
-          placeholder="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          placeholder="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button onClick={onLogin}>Sign in</button>
+        <div className="card">
+          <div className="olivo-brand">
+            <div className="logo">🫒</div>
+            <h1>Olivo Admin</h1>
+            <p>Restaurant chat console</p>
+          </div>
+          {error && <p className="olivo-error">{error}</p>}
+          <input
+            placeholder="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            placeholder="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button onClick={onLogin}>Sign in</button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="olivo-admin">
-      <h1>Conversations</h1>
-      <ul>
-        {conversations.map((c) => (
-          <li key={c.id}>{conversationLabel(c)}</li>
-        ))}
-      </ul>
+      <div className="olivo-topbar">
+        <span className="logo">🫒</span>
+        <h1>Olivo Admin</h1>
+      </div>
+      <div className="olivo-content">
+        <h2>Conversations</h2>
+        {conversations.length === 0 ? (
+          <p className="olivo-empty">No conversations yet.</p>
+        ) : (
+          <ul className="olivo-conv-list">
+            {conversations.map((c) => (
+              <li key={c.id} className="olivo-conv-card">
+                <span className="icon">💬</span>
+                <span className="title">{conversationLabel(c)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

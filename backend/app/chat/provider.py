@@ -16,14 +16,50 @@ class ChatProvider(Protocol):
 
 
 class DemoChatProvider:
-    """Deterministic canned reply — no external calls, no charges."""
+    """Deterministic, offline canned replies — no external calls, no charges.
+
+    Replies are keyword-routed to sound like a real restaurant concierge for the
+    sales demo; still fully deterministic (same input → same output)."""
+
+    _CANNED: tuple[tuple[tuple[str, ...], str], ...] = (
+        (
+            ("reserv", "book", "table", "seat"),
+            "Of course! I'd be glad to reserve a table at Trattoria Olivo. "
+            "For how many guests and what time would you like to join us?",
+        ),
+        (
+            ("hour", "open", "close", "time"),
+            "We're open Tuesday–Sunday: lunch 12:00–15:00 and dinner 18:00–23:00. "
+            "We're closed on Mondays. Shall I book you a table?",
+        ),
+        (
+            ("vegan", "gluten", "allerg", "vegetarian", "celiac"),
+            "Absolutely — we serve gluten-free pasta and several vegan and "
+            "vegetarian dishes. Please let our staff know of any allergies and "
+            "the kitchen will take care of you.",
+        ),
+        (
+            ("menu", "dish", "special", "wine", "recommend"),
+            "Tonight's specials are tagliatelle al tartufo and osso buco alla "
+            "milanese, paired beautifully with our house Chianti. Would you like "
+            "the full menu?",
+        ),
+        (
+            ("park", "location", "address", "where"),
+            "You'll find us at 12 Via Olivo, with street parking nearby and a "
+            "garage two minutes away. Looking forward to welcoming you!",
+        ),
+    )
 
     async def reply(self, *, user_message: str, history: list[str]) -> str:
-        turn = len([h for h in history if h])
+        text = user_message.lower()
+        for keywords, answer in self._CANNED:
+            if any(k in text for k in keywords):
+                return answer
         return (
-            "Thanks for contacting Trattoria Olivo! (demo) "
-            f"You said: {user_message.strip()}"
-            + (f" — this is turn {turn}." if turn else "")
+            "Thanks for reaching out to Trattoria Olivo! I can help with "
+            "reservations, opening hours, the menu, or dietary options — what "
+            "would you like to know?"
         )
 
 

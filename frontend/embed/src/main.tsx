@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { EmbedWidget } from "./EmbedWidget";
+import "./styles.css";
 
 // Demo wiring: a dummy tenant token + conversation id come from Vite env.
 // For a real embed these would be issued per restaurant site.

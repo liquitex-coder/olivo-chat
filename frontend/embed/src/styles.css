@@ -1,0 +1,166 @@
+:root {
+  --olivo-green: #3f6634;
+  --olivo-green-dark: #2c4a25;
+  --olivo-cream: #f7f4ec;
+  --olivo-accent: #c2703d;
+  --olivo-user: #3f6634;
+  --olivo-bot: #ffffff;
+  --olivo-ink: #2b2b2b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #eef1e8 0%, #e3e8da 100%);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--olivo-ink);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.olivo-embed {
+  width: 380px;
+  height: 560px;
+  background: var(--olivo-cream);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(44, 74, 37, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.olivo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, var(--olivo-green) 0%, var(--olivo-green-dark) 100%);
+  color: #fff;
+}
+
+.olivo-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.olivo-title {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.olivo-status {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.olivo-status::before {
+  content: "●";
+  color: #8fe388;
+  margin-right: 5px;
+  font-size: 10px;
+}
+
+.olivo-messages {
+  flex: 1;
+  padding: 18px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.olivo-msg {
+  display: flex;
+  max-width: 82%;
+}
+
+.olivo-msg--user {
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+
+.olivo-msg--assistant,
+.olivo-msg--system {
+  align-self: flex-start;
+}
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.olivo-msg--user .bubble {
+  background: var(--olivo-user);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.olivo-msg--assistant .bubble,
+.olivo-msg--system .bubble {
+  background: var(--olivo-bot);
+  color: var(--olivo-ink);
+  border-bottom-left-radius: 4px;
+}
+
+.olivo-error {
+  color: #b3402e;
+  font-size: 13px;
+  text-align: center;
+}
+
+.olivo-compose {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #fff;
+  border-top: 1px solid #e7e2d6;
+}
+
+.olivo-compose input {
+  flex: 1;
+  border: 1px solid #d8d2c4;
+  border-radius: 22px;
+  padding: 10px 16px;
+  font-size: 14px;
+  outline: none;
+}
+
+.olivo-compose input:focus {
+  border-color: var(--olivo-green);
+}
+
+.olivo-compose button {
+  border: none;
+  background: var(--olivo-accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0 20px;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.olivo-compose button:hover:not(:disabled) {
+  background: #a85c30;
+}
+
+.olivo-compose button:disabled {
+  background: #cdb9a8;
+  cursor: not-allowed;
+}
