@@ -21,8 +21,8 @@ Phase 2  DB layer + RLS tenant isolation (Alembic 0001/02) ✅ FR-B
 Phase 3  Auth / JWT (users, refresh rotation, RLS-armed)   ✅ FR-C
 Phase 4  Frontend (React/Vite embed + admin) + conv API    ✅ FR-D1
 Phase 5  Claude-backed chat responses                      ◐ FR-D2  pipeline ✅ mock / live 💲
-Phase 6  Stripe subscription + webhook verification        ◐ FR-D3  pipeline ✅ offline / live 💲 ← this session
-Phase 7  Production deploy (real secrets, managed PG)       ⬜ FR-D4  💲 cost-gated → demo only
+Phase 6  Stripe subscription + webhook verification        ◐ FR-D3  pipeline ✅ offline / live 💲
+Phase 7  Production deploy (real secrets, managed PG)       ◐ FR-D4  config ✅ / hosted deploy 💲 ← this session
 ```
 
 ## 2. Tasks (audit-verifiable Done criteria)
@@ -61,11 +61,11 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | D3-2 | Plan gating (`tenants.plan` free/pro/business; `/billing/premium` 402 until paid) | `test_billing.py` (gating + ranking) green | ✅ |
 | D3-3 | *(approval-gated)* swap in `StripeBillingProvider` + live test-mode wiring | **only after cost approval** | ⬜ 💲 |
 
-### Phase 7 — Deploy (FR-D4) ⬜ 💲 cost-gated
-| ID | Task | Done gate | Note |
+### Phase 7 — Deploy (FR-D4) ◐ config done (no charge); hosted deploy cost-gated
+| ID | Task | Done gate | Status |
 |---|---|---|---|
-| D4-1 | Deploy manifests, real-secret wiring, managed-PG `DATABASE_URL` | config validated; no placeholders in prod path | mocks/dummy for demo |
-| D4-2 | *(approval-gated)* actual hosted deploy | **only after cost approval** | 💲 |
+| D4-1 | `render.yaml` blueprint (no committed secrets) + `prodcheck` preflight (`is_production_ready`) | `test_deploy_config.py` (5) green; `DEPLOY.en.md` written | ✅ |
+| D4-2 | *(approval-gated)* actual hosted deploy + live provider swaps | **only after cost approval** | ⬜ 💲 |
 
 ## 3. Progress (audit-confirmed, Done only)
 
@@ -78,8 +78,10 @@ Legend: ✅ audit-confirmed · ⬜ not started · 💲 incurs charges → needs 
 | Phase 4 Conv API + frontends (FR-D1) | 1 | 1 | 100% ✅ |
 | Phase 5 chat pipeline (FR-D2, mock) | — | — | pipeline ✅ / live ⬜ 💲 |
 | Phase 6 billing pipeline (FR-D3, offline) | — | — | pipeline ✅ / live ⬜ 💲 |
-| Phase 7 + live activations (FR-D2/3/4) | 3 | 0 | 0% ⬜ 💲 |
+| Phase 7 deploy config (FR-D4, manifest) | — | — | config ✅ / hosted ⬜ 💲 |
+| Live activations (FR-D2/3/4) | 3 | 0 | 0% ⬜ 💲 |
 | **Signed scope done (FR-A…C + D1)** | **17** | **17** | **100% ✅** |
+| **No-charge scope (all non-live)** | — | — | **100% ✅** |
 | **Full product (FR-A…FR-D)** | **20** | **17** | **85%** |
 
 ```
@@ -90,14 +92,14 @@ Phase 3 Auth/JWT   [████████████████████
 Phase 4 Frontend   [██████████████████████████] 100% ✅  (5 pytest + 2× build/vitest)
 Phase 5 Claude     [████████████████████░░░░░]  pipeline ✅ mock · live 💲 approval
 Phase 6 Stripe     [████████████████████░░░░░]  pipeline ✅ offline · live 💲 approval
-Phase 7 Deploy     [░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 💲  demo only; hosting = approval
+Phase 7 Deploy     [████████████████████░░░░░]  config ✅ validated · hosted 💲 approval
 ```
 
-> **85% is requirement-count, audit-confirmed (41 pytest + ruff + 2 frontend builds).**
-> The chat (FR-D2) and billing (FR-D3) *pipelines* are mock/offline-complete and tested;
-> the remaining work is the **cost-gated live activations** (real Claude, live Stripe, paid
-> hosting) plus deploy manifests (FR-D4). Next no-charge step: **FR-D4 deploy manifests**
-> (config only); live activations need cost approval.
+> **85% is requirement-count, audit-confirmed (46 pytest + ruff + 2 frontend builds).**
+> The **entire no-charge scope is now complete** — chat + billing pipelines and deploy config
+> are built and tested offline. The remaining 15% is *exclusively* the **cost-gated live
+> activations** (real Claude, live Stripe, paid hosting), each one provider-swap away and
+> pending explicit cost approval.
 
 ---
 
